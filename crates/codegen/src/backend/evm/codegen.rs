@@ -37,6 +37,7 @@ use crate::{
         InstKind, MemoryRegion, MirPhase, MirType, Module, Terminator, Value, ValueId,
     },
     pass::run_pipeline,
+    target::Target,
 };
 use alloy_primitives::U256;
 use smallvec::SmallVec;
@@ -49,7 +50,7 @@ use solar_data_structures::{
 use solar_sema::Gcx;
 use std::{cell::OnceCell, collections::hash_map::Entry as StdEntry};
 
-mod select;
+pub(crate) mod select;
 mod switch;
 
 use self::{select::OpcodeLowering, switch::MAX_GAS_CODE_GROWTH};
@@ -6687,7 +6688,7 @@ impl<'gcx> EvmCodegen<'gcx> {
         // This ensures cross-block values are preserved in memory.
         self.spill_live_out_operands(func, liveness, block, &operands);
 
-        if let Some(lowering) = select::opcode_lowering(kind) {
+        if let Some(lowering) = select::opcode_lowering(&kind.op()) {
             self.emit_opcode_lowering(
                 func,
                 lowering,
@@ -7735,6 +7736,7 @@ impl<'gcx> EvmCodegen<'gcx> {
             .fold(ScheduleCost::default(), |cost, &value| cost.plus(memory_cost(value)));
         let optimization = self.gcx.sess.opts.optimization;
         let expected_executions = self.gcx.sess.opts.optimizer_runs.unwrap_or(200);
+        let target = Target::new(self.gcx);
         let context = self.resident_search_context(func, liveness, values, has_phis);
         let mut best = Option::<(ScheduleCost, Vec<ValueId>, GlobalStackPlan)>::None;
         for bits in 1usize..(1usize << values.len()) {
@@ -7766,11 +7768,11 @@ impl<'gcx> EvmCodegen<'gcx> {
                     memory_cost(value)
                 });
             }
-            if !candidate.cmp_lifetime_for(baseline, optimization, expected_executions).is_lt() {
+            if !candidate.cmp_lifetime_for(baseline, target).is_lt() {
                 continue;
             }
             if best.as_ref().is_none_or(|(best_cost, best_values, _)| {
-                candidate.cmp_lifetime_for(*best_cost, optimization, expected_executions).is_lt()
+                candidate.cmp_lifetime_for(*best_cost, target).is_lt()
                     || (candidate == *best_cost && subset.len() > best_values.len())
             }) {
                 best = Some((candidate, subset, plan));
@@ -8027,6 +8029,7 @@ impl<'gcx> EvmCodegen<'gcx> {
             .fold(ScheduleCost::default(), |cost, &value| cost.plus(memory_cost(value)));
         let optimization = self.gcx.sess.opts.optimization;
         let expected_executions = self.gcx.sess.opts.optimizer_runs.unwrap_or(200);
+        let target = Target::new(self.gcx);
         let context = self.resident_search_context(func, liveness, values, has_phis);
         let mut best = Option::<(ScheduleCost, Vec<ValueId>, GlobalStackPlan)>::None;
         for bits in 1usize..(1usize << values.len()) {
@@ -8064,11 +8067,11 @@ impl<'gcx> EvmCodegen<'gcx> {
                     memory_cost(value)
                 });
             }
-            if !candidate.cmp_lifetime_for(baseline, optimization, expected_executions).is_lt() {
+            if !candidate.cmp_lifetime_for(baseline, target).is_lt() {
                 continue;
             }
             if best.as_ref().is_none_or(|(best_cost, best_values, _)| {
-                candidate.cmp_lifetime_for(*best_cost, optimization, expected_executions).is_lt()
+                candidate.cmp_lifetime_for(*best_cost, target).is_lt()
                     || (candidate == *best_cost && subset.len() > best_values.len())
             }) {
                 best = Some((candidate, subset, plan));
