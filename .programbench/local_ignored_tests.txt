@@ -1,0 +1,15 @@
+# Course-side exclusions: tests that are environment-sensitive outside the
+# benchmark containers. Format: <branch>/<classname>.<testname>
+
+# APFS is case-insensitive, so case-sensitive import path matching diverges;
+# error messages embed /private/tmp where macOS resolves the /tmp symlink and the
+# stdin base-path import key is absolute; one diagnostic prints a different error
+# code number. test_argparse_validation.py is a defective test module (a stray
+# double comma `,,` -> SyntaxError) that fails collection on the gold binary too.
+
+1fced6989730/tests.test_cli.test_directory_input_error
+1fced6989730/tests.test_diagnostic_variations.test_abstract_function_span_note
+1fced6989730/tests.test_import_edge_cases.test_case_sensitive_import_matching
+1fced6989730/tests.test_paths.test_case_sensitive_import_paths
+1fced6989730/tests.test_stdin.test_stdin_with_base_path_imports
+a115183849a2/.eval.tests.test_argparse_validation
