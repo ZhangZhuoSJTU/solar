@@ -768,11 +768,13 @@ impl<'gcx> TypeChecker<'gcx> {
                 .emit();
         }
 
-        let count = std::cmp::min(exprs.len(), param_tys.len());
-        for i in 0..count {
+        // Only the positions present in both lists can be type-checked against a parameter.
+        let checked = if exprs.len() < param_tys.len() { exprs.len() } else { param_tys.len() };
+        for i in 0..checked {
             let _ = self.expect_ty(&exprs[i], param_tys[i]);
         }
-        for expr in exprs.iter().skip(count) {
+        // Any surplus arguments still get checked on their own, without an expected type.
+        for expr in exprs.iter().skip(checked) {
             let _ = self.check_expr(expr);
         }
     }

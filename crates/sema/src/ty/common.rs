@@ -80,7 +80,9 @@ impl<'gcx> CommonTypes<'gcx> {
     /// `int<size>`.
     #[inline]
     pub fn int_(&self, size: TypeSize) -> Ty<'gcx> {
-        self.ints[size.bytes() as usize - 1]
+        // `int8` is the first slot, so a one-byte type maps to index 0.
+        let slot = size.bytes() as usize - 1;
+        self.ints[slot]
     }
 
     /// `uint<bits>`.
@@ -92,7 +94,8 @@ impl<'gcx> CommonTypes<'gcx> {
     /// `uint<size>`.
     #[inline]
     pub fn uint_(&self, size: TypeSize) -> Ty<'gcx> {
-        self.uints[size.bytes() as usize - 1]
+        let slot = size.bytes() as usize - 1;
+        self.uints[slot]
     }
 
     /// `bytes<bytes>`.
@@ -104,7 +107,8 @@ impl<'gcx> CommonTypes<'gcx> {
     /// `bytes<size>`.
     #[inline]
     pub fn fixed_bytes_(&self, size: TypeSize) -> Ty<'gcx> {
-        self.fbs[size.bytes() as usize - 1]
+        let slot = size.bytes() as usize - 1;
+        self.fbs[slot]
     }
 }
 
