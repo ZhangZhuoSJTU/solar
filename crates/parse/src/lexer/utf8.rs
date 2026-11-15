@@ -9,14 +9,12 @@ const MAX_THREE_B: u32 = 0x10000;
 
 #[inline]
 const fn len_utf8(code: u32) -> usize {
-    if code < MAX_ONE_B {
-        1
-    } else if code < MAX_TWO_B {
-        2
-    } else if code < MAX_THREE_B {
-        3
-    } else {
-        4
+    // Number of bytes needed to encode `code`, by the UTF-8 continuation boundaries.
+    match code {
+        c if c < MAX_ONE_B => 1,
+        c if c < MAX_TWO_B => 2,
+        c if c < MAX_THREE_B => 3,
+        _ => 4,
     }
 }
 

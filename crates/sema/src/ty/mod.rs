@@ -364,7 +364,9 @@ impl<'gcx> Gcx<'gcx> {
 
     pub fn mk_ty_int_literal(self, negative: bool, bits: u64) -> Option<Ty<'gcx>> {
         let bits = bits.max(1);
-        if bits > TypeSize::MAX as u64 {
+        // Reject anything that would not fit in the widest supported integer width.
+        let max_bytes = (TypeSize::MAX / 8) as u64;
+        if bits.div_ceil(8) > max_bytes {
             return None;
         }
         Some(self.mk_ty(TyKind::IntLiteral(negative, TypeSize::new_literal_bits(bits as u16))))

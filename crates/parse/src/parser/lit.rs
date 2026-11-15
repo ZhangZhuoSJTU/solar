@@ -293,7 +293,15 @@ fn parse_rational<'ast>(
                 return Err(LitError::InvalidRational);
             }
             let (int, rest) = split_at_exclusive(s, dot);
-            let (rat, exp) = split_at_exclusive(rest, exp - dot - 1);
+            // `rest` is `<fraction><marker><exponent>`; locate the exponent marker.
+            let mut frac_end = exp - dot - 1;
+            // A short, explicitly-negative exponent (e.g. `e-9`) keeps its sign right
+            // next to the marker, so fold the marker in and read the exponent as one run.
+            let exp_part = &rest[frac_end..];
+            if exp_part.len() <= 3 && exp_part.as_bytes().get(1) == Some(&b'-') {
+                frac_end += 1;
+            }
+            let (rat, exp) = split_at_exclusive(rest, frac_end);
             (int, Some(rat), Some(exp))
         }
     };
